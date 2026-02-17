@@ -1,0 +1,7 @@
+@echo off
+echo Downloading Gradle wrapper jar...
+
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/gradle/gradle/master/gradle/wrapper/gradle-wrapper.jar' -OutFile 'gradle\wrapper\gradle-wrapper.jar'"
+
+echo Download complete!
+pause
