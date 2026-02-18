@@ -1,5 +1,3 @@
-=== FullscreenImageViewer.kt ===
-
 package com.quikpix.presentation.components
 
 import androidx.activity.compose.BackHandler
@@ -35,7 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
-import kotlin.math.coerceIn
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Fullscreen Image Viewer with zoom and pan support
@@ -103,7 +102,7 @@ fun FullscreenImageViewer(
                     }
                     .pointerInput(Unit) {
                         detectTransformGestures { centroid, pan, zoom, _ ->
-                            val newScale = (scale * zoom).coerceIn(1f, 5f)
+                            val newScale = max(1f, min(5f, scale * zoom))
 
                             // Calculate new offset with panning
                             val newOffset = if (newScale == 1f) {
@@ -113,8 +112,8 @@ fun FullscreenImageViewer(
                                 val maxY = (size.height * (newScale - 1)) / 2
 
                                 Offset(
-                                    x = (offset.x + pan.x * newScale).coerceIn(-maxX, maxX),
-                                    y = (offset.y + pan.y * newScale).coerceIn(-maxY, maxY)
+                                    x = max(-maxX, min(maxX, offset.x + pan.x * newScale)),
+                                    y = max(-maxY, min(maxY, offset.y + pan.y * newScale))
                                 )
                             }
 
