@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import com.quikpix.presentation.components.FullscreenImageViewer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,8 +64,9 @@ fun CategoryDetailScreen(
     val images: List<String> by viewModel.images.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
-    
+
     var showMenu by remember { mutableStateOf(false) }
+    var selectedImageUrl by remember { mutableStateOf<String?>(null) }
     
     LaunchedEffect(category.id) {
         viewModel.loadImages()
@@ -230,13 +232,24 @@ fun CategoryDetailScreen(
                             ImageGridItem(
                                 imageUri = imageUri,
                                 index = index,
-                                onClick = { onImageClick(index, images) }
+                                onClick = {
+                                    selectedImageUrl = imageUri
+                                }
                             )
                         }
                     }
                 }
             }
         }
+    }
+
+    // Show fullscreen image viewer when an image is selected
+    selectedImageUrl?.let { imageUrl ->
+        FullscreenImageViewer(
+            imageUrl = imageUrl,
+            contentDescription = "Fullscreen image",
+            onDismiss = { selectedImageUrl = null }
+        )
     }
 }
 
