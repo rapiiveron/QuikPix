@@ -36,14 +36,6 @@ import coil.compose.AsyncImage
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Fullscreen Image Viewer with zoom and pan support
- * Fixes common compilation issues:
- * 1. Uses Surface to prevent touch propagation to background
- * 2. Proper state management with remember
- * 3. Gesture detection without conflicts
- * 4. Proper back handling
- */
 @Composable
 fun FullscreenImageViewer(
     imageUrl: String,
@@ -58,21 +50,17 @@ fun FullscreenImageViewer(
             decorFitsSystemWindows = false
         )
     ) {
-        // CRITICAL: Surface blocks touch propagation to prevent clicking through to background
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = backgroundColor
         ) {
             var showControls by remember { mutableStateOf(true) }
 
-            // Zoom and pan state
             var scale by remember { mutableFloatStateOf(1f) }
             var offset by remember { mutableStateOf(Offset(0f, 0f)) }
 
-            // Handle back button to exit fullscreen
             BackHandler(onBack = {
                 if (scale > 1.1f) {
-                    // Reset zoom first if zoomed in
                     scale = 1f
                     offset = Offset(0f, 0f)
                 } else {
@@ -85,14 +73,12 @@ fun FullscreenImageViewer(
                     .fillMaxSize()
                     .pointerInput(Unit) {
                         detectTapGestures(
-                            onDoubleTap = { tapOffset ->
-                                // Double tap to zoom in/out
+                            onDoubleTap = { _ ->
                                 if (scale > 1.5f) {
                                     scale = 1f
                                     offset = Offset(0f, 0f)
                                 } else {
                                     scale = 3f
-                                    // Center zoom on tap point could be added here
                                 }
                             },
                             onTap = {
@@ -101,10 +87,9 @@ fun FullscreenImageViewer(
                         )
                     }
                     .pointerInput(Unit) {
-                        detectTransformGestures { centroid, pan, zoom, _ ->
+                        detectTransformGestures { _, pan, zoom, _ ->
                             val newScale = max(1f, min(5f, scale * zoom))
 
-                            // Calculate new offset with panning
                             val newOffset = if (newScale == 1f) {
                                 Offset(0f, 0f)
                             } else {
@@ -123,7 +108,6 @@ fun FullscreenImageViewer(
                     },
                 contentAlignment = Alignment.Center
             ) {
-                // Image with zoom and pan applied
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = contentDescription,
@@ -138,7 +122,6 @@ fun FullscreenImageViewer(
                         )
                 )
 
-                // Close button overlay
                 AnimatedVisibility(
                     visible = showControls,
                     enter = fadeIn(tween(300)),
