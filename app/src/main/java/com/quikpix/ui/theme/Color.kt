@@ -1,4 +1,4 @@
-package com.fastgallery.ui.theme
+package com.quikpix.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

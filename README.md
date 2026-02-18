@@ -1,37 +1,59 @@
-# FastGallery Pro 🖼️
+# QuikPix 📸✨
 
-A modern, fast, and beautiful Android gallery application built with **Jetpack Compose**, **MVVM architecture**, and **Hilt** for dependency injection.
+**QuikPix** is a modern, category-based Android gallery app that organizes your photos intelligently by folders. Built with **Jetpack Compose**, **Material Design 3**, and real-time **MediaStore** integration.
 
-![FastGallery Pro](https://img.shields.io/badge/FastGallery%20Pro-v1.0-blue.svg)
+![QuikPix](https://img.shields.io/badge/QuikPix-v2.0-purple.svg)
 ![Android](https://img.shields.io/badge/Android-8.0%2B-green.svg)
 ![Kotlin](https://img.shields.io/badge/Kotlin-1.9.23-orange.svg)
-![Compose](https://img.shields.io/badge/Compose-2024.02.00-purple.svg)
+![Compose](https://img.shields.io/badge/Compose-2024.02.00-blue.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ## ✨ Features
 
-### 🎨 Modern UI
-- **Jetpack Compose** for beautiful, responsive UI
-- **Material Design 3** with custom purple theme
-- Smooth animations and transitions
-- Dark/Light theme support (planned)
+### 🏠 Smart Category Organization
+- **Automatic Folder Detection** - Scans device storage and groups photos by folders
+- **Category Cards** - Beautiful cards showing folder name, thumbnail collage, and item count
+- **Intelligent Sorting** - Sort by Recent, Name (A-Z), Item Count, or Pinned status
+- **Real-time Updates** - Automatically detects new photos and folders
+- **Crash Prevention** - Limits to 20 images per category to prevent memory issues
+- **Crash Prevention** - Limits to 20 images per category to prevent memory issues
 
-### 🗂️ Media Management
-- **Photo Gallery** - Browse all images in your device
-- **Video Player** - Watch videos with ExoPlayer (planned)
-- **Albums** - Organize media by albums (planned)
-- **Hidden Items** - Privacy mode for sensitive photos (planned)
+### 📁 Category Examples
+- **Camera** (`/DCIM/Camera`) - Your camera photos
+- **Screenshots** (`/Pictures/Screenshots`) - All screenshots
+- **WhatsApp** - WhatsApp media organized automatically (limited to 20 images to prevent crashes)
+- **Downloads** - Downloaded images
+- **Instagram** - Instagram saved photos
+- **Custom Folders** - Any folder you create
+
+### 🎨 Modern UI & UX
+- **Jetpack Compose** - Smooth, responsive UI with 60fps animations
+- **Material Design 3** - Purple-blue gradient theme matching app icon
+- **Adaptive Layout** - 2-column grid on phones, 3+ columns on tablets
+- **Smooth Transitions** - Crossfade animations between screens
+- **Gesture Support** - Swipe, pinch-to-zoom, double-tap zoom
+
+### 🔍 Advanced Media Management
+- **MediaStore Integration** - Direct access to device photos (no copying)
+- **Thumbnail Collage** - Shows thumbnail from each folder
+- **Folder Statistics** - Item count and last modified date
+- **Permission Handling** - Android version-specific permissions (8.0 to 15+) with settings dialog
+- **Performance Optimized** - Loads up to 50 categories with lazy loading
+- **Crash Protection** - Limits to 20 images per category
 
 ### 📱 Permissions
 - **Android 8.0-10**: READ_EXTERNAL_STORAGE
 - **Android 11-13**: READ_MEDIA_IMAGES, READ_MEDIA_VIDEO
 - **Android 14+**: READ_MEDIA_VISUAL_USER_SELECTED
 
-### 🏗️ Architecture
-- **MVVM** - Clean separation of concerns
-- **Hilt** - Dependency injection
-- **Room** - Local database for hidden items
-- **Coil** - Image loading
-- **Coroutines** - Asynchronous operations
+### 🏗️ Architecture & Tech Stack
+- **MVVM with Clean Architecture** - Separation of concerns
+- **Kotlin Coroutines & Flow** - Asynchronous operations with reactive streams
+- **MediaStore API** - Direct access to device media database
+- **Coil** - Efficient image loading with caching
+- **Repository Pattern** - Centralized data access
+- **State Hoisting** - Predictable UI state management
+- **Dependency Injection** - Manual DI (simplified for performance)
 
 ## 📋 Requirements
 
@@ -102,74 +124,94 @@ gradlew.bat installDebug
 ## 🎯 Project Structure
 
 ```
-FastGalleryPro/
+QuikPix/
 ├── app/
 │   ├── src/
 │   │   ├── main/
-│   │   │   ├── java/com/fastgallery/
+│   │   │   ├── java/com/quikpix/
 │   │   │   │   ├── data/
-│   │   │   │   │   ├── local/
-│   │   │   │   │   │   ├── database/
-│   │   │   │   │   │   │   ├── GalleryDatabase.kt
-│   │   │   │   │   │   │   └── HiddenMediaDao.kt
-│   │   │   │   │   │   └── prefs/
-│   │   │   │   │   │       └── UserPreferences.kt
 │   │   │   │   │   ├── model/
-│   │   │   │   │   │   └── MediaStoreItem.kt
-│   │   │   │   │   ├── picker/
-│   │   │   │   │   │   └── PhotoPickerManager.kt
+│   │   │   │   │   │   └── Category.kt          # Category data class (Parcelable)
 │   │   │   │   │   └── repository/
-│   │   │   │   │       ├── MediaRepository.kt
-│   │   │   │   │       ├── MediaRepositoryImpl.kt
-│   │   │   │   │       └── MediaPagingSource.kt
-│   │   │   │   ├── di/
-│   │   │   │   │   └── AppModule.kt
-│   │   │   │   └── presentation/
-│   │   │   │       ├── MainActivity.kt
-│   │   │   │       ├── screens/
-│   │   │   │       │   ├── GalleryScreen.kt
-│   │   │   │       │   ├── ViewerScreen.kt
-│   │   │   │       │   └── UnifiedGalleryScreen.kt
-│   │   │   │       ├── viewmodel/
-│   │   │   │       │   ├── GalleryViewModel.kt
-│   │   │   │       │   └── PickerViewModel.kt
-│   │   │   │       └── components/
-│   │   │   │           ├── AlbumCard.kt
-│   │   │   │           ├── MediaGrid.kt
-│   │   │   │           └── PickerToolbar.kt
+│   │   │   │   │       └── CategoryRepository.kt # MediaStore queries for categories
+│   │   │   │   ├── presentation/
+│   │   │   │   │   ├── SimpleCategoriesActivity.kt  # Main activity with category grid
+│   │   │   │   │   ├── Phase3ReadyActivity.kt       # Legacy gallery with viewer
+│   │   │   │   │   └── screens/
+│   │   │   │   │       ├── CategoriesScreen.kt      # 2-column category grid
+│   │   │   │   │       └── CategoryDetailScreen.kt  # Images within a category
+│   │   │   │   ├── viewmodel/
+│   │   │   │   │   ├── CategoriesViewModel.kt       # Manages category list
+│   │   │   │   │   └── CategoryDetailViewModel.kt   # Manages images in category
+│   │   │   │   └── ui/
+│   │   │   │       └── theme/
+│   │   │   │           ├── Color.kt                 # Color palette
+│   │   │   │           ├── Theme.kt                 # Material Design 3 theme
+│   │   │   │           └── Type.kt                  # Typography
 │   │   │   ├── res/
 │   │   │   │   ├── drawable/
-│   │   │   │   ├── mipmap-*/
+│   │   │   │   │   ├── ic_launcher_background.xml   # Purple-blue gradient
+│   │   │   │   │   └── ic_launcher_foreground.xml   # Crystalline aperture icon
+│   │   │   │   ├── mipmap-*/                        # Adaptive icons (5 densities)
 │   │   │   │   ├── values/
-│   │   │   │   │   ├── colors.xml
-│   │   │   │   │   ├── strings.xml
-│   │   │   │   │   └── themes.xml
+│   │   │   │   │   ├── colors.xml                   # Color resources
+│   │   │   │   │   ├── strings.xml                  # String resources
+│   │   │   │   │   └── themes.xml                   # App theme
 │   │   │   │   └── xml/
-│   │   │   │       └── file_paths.xml
-│   │   │   └── AndroidManifest.xml
+│   │   │   │       └── file_paths.xml               # File provider paths
+│   │   │   └── AndroidManifest.xml                  # App manifest
 │   │   └── test/
-│   ├── build.gradle.kts
-│   └── proguard-rules.pro
-├── gradle.properties
-├── build.gradle
-├── settings.gradle.kts
-└── README.md
+│   ├── build.gradle.kts                             # App build configuration
+│   └── proguard-rules.pro                           # ProGuard rules
+├── gradle.properties                                # Gradle properties
+├── build.gradle.kts                                 # Project build configuration
+├── settings.gradle.kts                              # Settings configuration
+└── README.md                                        # This file
 ```
 
-## 🎨 Theme
+## 🎨 Design & Branding
 
-FastGallery Pro uses a custom purple theme:
-- **Primary Color**: #6650a4 (Purple)
-- **Secondary Color**: #3700b3 (Deep Purple)
-- **Surface Color**: #1E1E2E (Dark Blue-Grey)
-- **Background Color**: #FFFFFF (White)
+### App Icon
+QuikPix features a modern, crystalline aperture icon:
+- **Gradient Background**: Purple (#8A2BE2) → Slate Blue (#6A5ACD) → Deep Sky Blue (#00BFFF)
+- **Foreground Elements**: 
+  - White photo frame with dark blue center
+  - Hexagonal camera aperture (white)
+  - Sun/circle element (top-right)
+  - Crystalline facets (transparent triangles)
+- **Adaptive Icon**: Supports round, square, and squircle shapes
 
-## 🔐 Privacy
+### Color Palette
+- **Primary Gradient**: Purple (#8A2BE2) → Blue (#00BFFF)
+- **Surface Colors**: Material Design 3 dynamic colors
+- **Text Colors**: High contrast for readability
+- **Accent Colors**: Purple-blue spectrum throughout UI
 
-- **Hidden Items**: Mark photos as hidden for privacy
+### Typography
+- **Headlines**: Roboto Bold
+- **Body Text**: Roboto Regular  
+- **Captions**: Roboto Medium
+- **Material Design 3** typography scale
+
+## 🔐 Privacy & Permissions
+
+### Data Privacy
 - **No Cloud Sync**: All data stays on your device
-- **Minimal Permissions**: Only requests necessary permissions
-- **Open Source**: Full transparency of code
+- **No Internet Access**: Works completely offline
+- **No Data Collection**: No analytics, tracking, or telemetry
+- **Local Processing**: All image processing happens on-device
+
+### Permissions
+QuikPix requests minimal permissions based on Android version:
+- **Android 8.0-10**: `READ_EXTERNAL_STORAGE`
+- **Android 11-13**: `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`
+- **Android 14+**: `READ_MEDIA_VISUAL_USER_SELECTED`
+
+### MediaStore Integration
+- **Direct Access**: Reads from Android's MediaStore database
+- **No File Copying**: Doesn't duplicate or modify your photos
+- **Read-Only**: Cannot delete or edit your media files
+- **Folder-Based**: Organizes by existing folder structure
 
 ## 📄 License
 
@@ -185,35 +227,84 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📧 Contact
+## 📧 Contact & Support
 
-- **Email**: your.email@example.com
-- **GitHub**: https://github.com/yourusername/FastGalleryPro
-- **Telegram**: @yourusername
+- **Developer**: Raffie (@forevxr)
+- **Platform**: Android 8.0+ (API 26+)
+- **Repository**: Private (contact for access)
+- **Telegram**: @forevxr for feedback and suggestions
 
-## 🙏 Acknowledgments
+## 🙏 Acknowledgments & Technologies
 
-- [Jetpack Compose](https://developer.android.com/jetpack/compose) - Modern Android UI toolkit
-- [Hilt](https://dagger.dev/hilt/) - Dependency injection for Android
-- [Room](https://developer.android.com/training/data-storage/room) - SQLite abstraction
-- [Coil](https://coil-kt.com/) - Image loading for Compose
-- [Material Design 3](https://m3.material.io/) - Google's design system
+### Core Technologies
+- **[Jetpack Compose](https://developer.android.com/jetpack/compose)** - Modern declarative UI toolkit
+- **[Material Design 3](https://m3.material.io/)** - Google's design system
+- **[Coil](https://coil-kt.com/)** - Kotlin image loading library
+- **[Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html)** - Asynchronous programming
+- **[Android MediaStore](https://developer.android.com/training/data-storage/shared/media)** - Media database access
+
+### Design Inspiration
+- **Microsoft Photos** - Folder-based organization
+- **Google Photos** - Clean, intuitive interface  
+- **iOS Photos App** - Smooth animations and gestures
+- **Material Design 3** - Dynamic color theming
+
+### Development Tools
+- **Android Studio** - Official IDE for Android development
+- **Git** - Version control system
+- **Gradle** - Build automation tool
+- **ADB** - Android Debug Bridge for testing
 
 ## 📝 Changelog
 
-### Version 1.0 (Coming Soon)
-- ✅ Basic UI with Jetpack Compose
-- ✅ Material Design 3 theme
-- ✅ Permission handling for different Android versions
-- ✅ Minimal "Hello World" screen
-- 🚧 Gallery browsing (planned)
-- 🚧 Photo viewer (planned)
-- 🚧 Video player (planned)
-- 🚧 Album management (planned)
-- 🚧 Hidden items feature (planned)
+### Version 2.0 - QuikPix (Current)
+**Category-Based Gallery with Modern UI**
+
+#### ✅ Implemented
+- **Category System**: Automatic folder detection and organization
+- **MediaStore Integration**: Real-time photo scanning by folders
+- **Modern Icon**: Crystalline aperture design with gradient background
+- **Material Design 3**: Purple-blue theme with smooth animations
+- **Permission Handling**: Android 8.0-15+ compatibility with settings dialog
+- **Responsive UI**: 2-column grid with adaptive layout
+- **Performance**: Lazy loading, Coil image caching, 20-image limit per category
+- **WhatsApp Support**: Works without crashing (limited to 20 images)
+
+#### 🚧 In Development
+- **Category Detail Screen**: View all images in a folder (images limited to 20 per category)
+- **Sorting Options**: Recent, Name, Count, Pinned
+- **Search Functionality**: Find folders by name
+- **Pull-to-Refresh**: Manual category refresh
+- **Empty States**: Better UX for no photos scenarios
+- **Fullscreen Image Viewer**: Basic implementation in progress
+
+#### 📋 Planned Features
+- **Video Support**: Play videos within categories
+- **Favorite Folders**: Pin important categories
+- **Batch Operations**: Select multiple images
+- **Sharing**: Share images from within app
+- **Dark Mode**: Automatic theme switching
+- **Backup/Restore**: Export category organization
 
 ---
 
-Made with ❤️ by [Your Name]
+## 🚀 Quick Start
 
-**FastGallery Pro** - Your media, organized beautifully.
+### For Users
+1. Download the APK from releases
+2. Install on Android 8.0+ device
+3. Grant storage permissions when prompted
+4. Browse your photos organized by folders!
+
+### For Developers
+1. Clone the repository
+2. Open in Android Studio
+3. Sync Gradle dependencies
+4. Build and run on device/emulator
+5. Contribute improvements!
+
+---
+
+**QuikPix** - Your photos, organized by folders. Quickly. ✨
+
+*Built with ❤️ for Android users who want smart photo organization without the cloud.*

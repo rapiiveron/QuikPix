@@ -1,4 +1,4 @@
-package com.fastgallery.ui.theme
+package com.quikpix.ui.theme
 
 import android.app.Activity
 import android.os.Build
