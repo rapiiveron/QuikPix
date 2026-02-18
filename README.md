@@ -78,13 +78,13 @@
 ### From Android Studio
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/FastGalleryPro.git
-   cd FastGalleryPro
+   git clone https://github.com/yourusername/QuikPix.git
+   cd QuikPix
    ```
 
 2. Open in Android Studio:
    - Open **File** → **Open**
-   - Select the `FastGalleryPro` folder
+   - Select the `QuikPix` folder
    - Click **OK**
 
 3. Sync Gradle:
@@ -228,9 +228,9 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📧 Contact & Support
 
-- **Developer**: Raffie (@forevxr)
+- **Developer**: rapii
 - **Platform**: Android 8.0+ (API 26+)
-- **Repository**: Private (contact for access)
+- **Repository**: https://github.com/rapiiveron/QuikPix
 - **Telegram**: @forevxr for feedback and suggestions
 
 ## 🙏 Acknowledgments & Technologies
