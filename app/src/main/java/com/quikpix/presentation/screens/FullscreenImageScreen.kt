@@ -2,6 +2,7 @@ package com.quikpix.presentation.screens
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -36,6 +37,7 @@ import coil.compose.AsyncImage
 import com.quikpix.viewmodel.CategoryDetailUiState
 import com.quikpix.viewmodel.CategoryDetailViewModel
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FullscreenImageScreen(
     categoryName: String,
