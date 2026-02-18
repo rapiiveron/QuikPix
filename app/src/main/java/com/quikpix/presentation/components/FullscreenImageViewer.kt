@@ -87,18 +87,26 @@ fun FullscreenImageViewer(
                         )
                     }
                     .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ ->
+                        detectTransformGestures { centroid, pan, zoom, rotation ->
                             val newScale = max(1f, min(5f, scale * zoom))
 
                             val newOffset = if (newScale == 1f) {
                                 Offset(0f, 0f)
                             } else {
-                                val maxX = (size.width * (newScale - 1)) / 2
-                                val maxY = (size.height * (newScale - 1)) / 2
+                                val containerSize = size
+                                val centerX = containerSize.width / 2
+                                val centerY = containerSize.height / 2
+
+                                // Calculate offset based on centroid movement
+                                val newOffsetX = (centroid.x - centerX) * (1f - 1f / newScale) + pan.x * newScale
+                                val newOffsetY = (centroid.y - centerY) * (1f - 1f / newScale) + pan.y * newScale
+
+                                val maxX = (containerSize.width * (newScale - 1)) / 2
+                                val maxY = (containerSize.height * (newScale - 1)) / 2
 
                                 Offset(
-                                    x = max(-maxX, min(maxX, offset.x + pan.x * newScale)),
-                                    y = max(-maxY, min(maxY, offset.y + pan.y * newScale))
+                                    x = max(-maxX, min(maxX, newOffsetX)),
+                                    y = max(-maxY, min(maxY, newOffsetY))
                                 )
                             }
 
