@@ -16,7 +16,6 @@
 - **Intelligent Sorting** - Sort by Recent, Name (A-Z), Item Count, or Pinned status
 - **Real-time Updates** - Automatically detects new photos and folders
 - **Crash Prevention** - Limits to 20 images per category to prevent memory issues
-- **Crash Prevention** - Limits to 20 images per category to prevent memory issues
 
 ### 📁 Category Examples
 - **Camera** (`/DCIM/Camera`) - Your camera photos
