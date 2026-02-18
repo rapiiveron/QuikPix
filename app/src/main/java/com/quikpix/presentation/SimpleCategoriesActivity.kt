@@ -15,9 +15,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,6 +29,7 @@ import com.quikpix.presentation.screens.CategoriesScreen
 import com.quikpix.presentation.screens.CategoryDetailScreen
 import com.quikpix.presentation.screens.FullscreenImageScreen
 import com.quikpix.ui.theme.QuikPixTheme
+import com.quikpix.viewmodel.CategoryDetailViewModel
 
 class SimpleCategoriesActivity : ComponentActivity() {
 
@@ -70,31 +73,42 @@ class SimpleCategoriesActivity : ComponentActivity() {
                                 navArgument("categoryName") { type = NavType.StringType }
                             )
                         ) { backStackEntry ->
-                            val categoryName =
+                            // Keep the encoded form to reuse in the fullscreen route
+                            val encodedName =
                                 backStackEntry.arguments?.getString("categoryName") ?: ""
                             CategoryDetailScreen(
-                                categoryName = Uri.decode(categoryName),
+                                categoryName = Uri.decode(encodedName),
                                 onBack = { navController.popBackStack() },
-                                onImageClick = { imageUri ->
-                                    navController.navigate(
-                                        "fullscreen/${Uri.encode(imageUri.toString())}"
-                                    )
+                                onImageClick = { index ->
+                                    navController.navigate("fullscreen/$encodedName/$index")
                                 }
                             )
                         }
 
                         composable(
-                            route = "fullscreen/{imageUri}",
+                            route = "fullscreen/{categoryName}/{initialIndex}",
                             arguments = listOf(
-                                navArgument("imageUri") { type = NavType.StringType }
+                                navArgument("categoryName") { type = NavType.StringType },
+                                navArgument("initialIndex") { type = NavType.IntType }
                             )
                         ) { backStackEntry ->
-                            val encodedUri =
-                                backStackEntry.arguments?.getString("imageUri") ?: ""
-                            val imageUri = Uri.parse(Uri.decode(encodedUri))
+                            val encodedName =
+                                backStackEntry.arguments?.getString("categoryName") ?: ""
+                            val initialIndex =
+                                backStackEntry.arguments?.getInt("initialIndex") ?: 0
+
+                            // Reuse the ViewModel from the CategoryDetail entry so images
+                            // are already loaded — no second MediaStore query needed.
+                            val parentEntry = remember(backStackEntry) {
+                                navController.getBackStackEntry("category_detail/{categoryName}")
+                            }
+                            val viewModel: CategoryDetailViewModel = viewModel(parentEntry)
+
                             FullscreenImageScreen(
-                                imageUri = imageUri,
-                                onBack = { navController.popBackStack() }
+                                categoryName = Uri.decode(encodedName),
+                                initialIndex = initialIndex,
+                                onBack = { navController.popBackStack() },
+                                viewModel = viewModel
                             )
                         }
                     }
