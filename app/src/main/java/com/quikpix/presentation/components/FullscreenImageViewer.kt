@@ -30,8 +30,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import kotlin.math.max
 import kotlin.math.min
@@ -43,114 +41,122 @@ fun FullscreenImageViewer(
     onDismiss: () -> Unit,
     backgroundColor: Color = Color.Black
 ) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false
-        )
+    // Use a fullscreen overlay instead of Dialog for better gesture handling
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = backgroundColor
     ) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = backgroundColor
-        ) {
-            var showControls by remember { mutableStateOf(true) }
+        var showControls by remember { mutableStateOf(true) }
+        var scale by remember { mutableFloatStateOf(1f) }
+        var offset by remember { mutableStateOf(Offset(0f, 0f)) }
 
-            var scale by remember { mutableFloatStateOf(1f) }
-            var offset by remember { mutableStateOf(Offset(0f, 0f)) }
+        // Handle back button
+        BackHandler(onBack = {
+            if (scale > 1.1f) {
+                // Reset zoom first if zoomed in
+                scale = 1f
+                offset = Offset(0f, 0f)
+            } else {
+                onDismiss()
+            }
+        })
 
-            BackHandler(onBack = {
-                if (scale > 1.1f) {
-                    scale = 1f
-                    offset = Offset(0f, 0f)
-                } else {
-                    onDismiss()
-                }
-            })
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onDoubleTap = { _ ->
-                                if (scale > 1.5f) {
-                                    scale = 1f
-                                    offset = Offset(0f, 0f)
-                                } else {
-                                    scale = 3f
-                                }
-                            },
-                            onTap = {
-                                showControls = !showControls
-                            }
-                        )
-                    }
-                    .pointerInput(Unit) {
-                        detectTransformGestures { centroid, pan, zoom, rotation ->
-                            val newScale = max(1f, min(5f, scale * zoom))
-
-                            val newOffset = if (newScale == 1f) {
-                                Offset(0f, 0f)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = { tapOffset ->
+                            // Double tap to zoom in/out
+                            if (scale > 1.5f) {
+                                // Reset zoom
+                                scale = 1f
+                                offset = Offset(0f, 0f)
                             } else {
+                                // Zoom to 3x at tap location
+                                scale = 3f
+                                // Center on tap point
                                 val containerSize = size
                                 val centerX = containerSize.width / 2
                                 val centerY = containerSize.height / 2
-
-                                // Calculate offset based on centroid movement
-                                val newOffsetX = (centroid.x - centerX) * (1f - 1f / newScale) + pan.x * newScale
-                                val newOffsetY = (centroid.y - centerY) * (1f - 1f / newScale) + pan.y * newScale
-
-                                val maxX = (containerSize.width * (newScale - 1)) / 2
-                                val maxY = (containerSize.height * (newScale - 1)) / 2
-
-                                Offset(
-                                    x = max(-maxX, min(maxX, newOffsetX)),
-                                    y = max(-maxY, min(maxY, newOffsetY))
+                                
+                                offset = Offset(
+                                    x = (tapOffset.x - centerX) * (1f - 1f / 3f),
+                                    y = (tapOffset.y - centerY) * (1f - 1f / 3f)
                                 )
                             }
-
-                            scale = newScale
-                            offset = newOffset
+                        },
+                        onTap = {
+                            // Toggle controls visibility
+                            showControls = !showControls
                         }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = contentDescription,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer(
-                            scaleX = scale,
-                            scaleY = scale,
-                            translationX = offset.x,
-                            translationY = offset.y
-                        )
-                )
+                    )
+                }
+                .pointerInput(Unit) {
+                    detectTransformGestures { centroid, pan, zoom, _ ->
+                        // Handle pinch-to-zoom
+                        val newScale = max(1f, min(5f, scale * zoom))
 
-                AnimatedVisibility(
-                    visible = showControls,
-                    enter = fadeIn(tween(300)),
-                    exit = fadeOut(tween(300)),
-                    modifier = Modifier.align(Alignment.TopEnd)
-                ) {
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .background(
-                                color = Color.Black.copy(alpha = 0.5f),
-                                shape = androidx.compose.foundation.shape.CircleShape
+                        // Handle panning
+                        val newOffset = if (newScale == 1f) {
+                            Offset(0f, 0f)
+                        } else {
+                            val containerSize = size
+                            val maxX = (containerSize.width * (newScale - 1)) / 2
+                            val maxY = (containerSize.height * (newScale - 1)) / 2
+
+                            // Calculate new offset with panning
+                            val newOffsetX = offset.x + pan.x * newScale
+                            val newOffsetY = offset.y + pan.y * newScale
+
+                            Offset(
+                                x = max(-maxX, min(maxX, newOffsetX)),
+                                y = max(-maxY, min(maxY, newOffsetY))
                             )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = Color.White
-                        )
+                        }
+
+                        scale = newScale
+                        offset = newOffset
                     }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            // Image with zoom and pan applied
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = contentDescription,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offset.x,
+                        translationY = offset.y
+                    )
+            )
+
+            // Close button overlay
+            AnimatedVisibility(
+                visible = showControls,
+                enter = fadeIn(tween(300)),
+                exit = fadeOut(tween(300)),
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .background(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            shape = androidx.compose.foundation.shape.CircleShape
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = Color.White
+                    )
                 }
             }
         }
