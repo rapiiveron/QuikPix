@@ -154,7 +154,10 @@ private fun ZoomablePage(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .transformable(state = transformableState)
+                .transformable(
+                    state = transformableState,
+                    canPan = { scale > 1f }  // pass-through at normal zoom so pager can swipe
+                )
         ) {
             AsyncImage(
                 model = uri,
