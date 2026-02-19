@@ -7,8 +7,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -124,12 +128,6 @@ private fun ZoomablePage(
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
-    val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
-        scale = (scale * zoomChange).coerceIn(0.5f, 5f)
-        offset = if (scale <= 1f) Offset.Zero else offset + panChange
-        onScaleChanged(scale)
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -147,10 +145,38 @@ private fun ZoomablePage(
                     onScaleChanged(scale)
                 }
             )
-            .transformable(
-                state = transformableState,
-                canPan = { scale > 1f }
-            )
+            // Custom gesture handler: only consumes events when zoomed in or doing a
+            // multi-touch pinch. At scale == 1f with a single finger, events are left
+            // unconsumed so the parent HorizontalPager can handle the swipe.
+            // (The old `transformable` modifier ran `detectTransformGestures` which
+            // consumed single-finger drags regardless of `canPan`, starving the pager.)
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    do {
+                        val event = awaitPointerEvent()
+                        val canceled = event.changes.any { it.isConsumed }
+                        if (!canceled) {
+                            val pointerCount = event.changes.count { it.pressed }
+                            if (pointerCount >= 2) {
+                                // Multi-touch: handle zoom + pan and consume events.
+                                val zoomChange = event.calculateZoom()
+                                val panChange = event.calculatePan()
+                                scale = (scale * zoomChange).coerceIn(0.5f, 5f)
+                                offset = if (scale <= 1f) Offset.Zero else offset + panChange
+                                onScaleChanged(scale)
+                                event.changes.forEach { if (it.positionChanged()) it.consume() }
+                            } else if (scale > 1f) {
+                                // Single-touch while zoomed in: pan and consume events.
+                                val panChange = event.calculatePan()
+                                offset = offset + panChange
+                                event.changes.forEach { if (it.positionChanged()) it.consume() }
+                            }
+                            // Single-touch at scale 1f: don't consume → pager swipes.
+                        }
+                    } while (event.changes.any { it.pressed })
+                }
+            }
     ) {
         AsyncImage(
             model = uri,
