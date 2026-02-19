@@ -2,13 +2,14 @@ package com.quikpix.presentation.screens
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -29,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -45,8 +45,6 @@ fun FullscreenImageScreen(
     onBack: () -> Unit,
     viewModel: CategoryDetailViewModel = viewModel()
 ) {
-    // Only load if data is not already present (avoids double-load when ViewModel is
-    // shared with the CategoryDetail back-stack entry)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(categoryName) {
         if (uiState !is CategoryDetailUiState.Success) {
@@ -56,16 +54,13 @@ fun FullscreenImageScreen(
 
     val images = (uiState as? CategoryDetailUiState.Success)?.images ?: emptyList()
 
-    // rememberPagerState must be called unconditionally (Compose rules)
     val pagerState = rememberPagerState(
         initialPage = if (images.isNotEmpty()) initialIndex.coerceIn(0, images.size - 1) else 0
     ) { images.size }
 
-    // Tracks the zoom level of the current page so the pager swipe can be disabled
-    // while zoomed in (the pan gesture takes over horizontal movement instead).
     var currentPageScale by remember { mutableStateOf(1f) }
     LaunchedEffect(pagerState.currentPage) {
-        currentPageScale = 1f  // defensive reset whenever the page settles
+        currentPageScale = 1f
     }
 
     var showControls by remember { mutableStateOf(true) }
@@ -113,11 +108,13 @@ fun FullscreenImageScreen(
 /**
  * A single zoomable image page inside the pager.
  *
- * Gesture layering (outer Box for taps, inner Box for pinch/pan, graphicsLayer on image):
- *  - Outer Box  -> detectTapGestures (single-tap toggles UI, double-tap zooms)
- *  - Inner Box  -> transformable (pinch-to-zoom + pan while zoomed)
- *  - AsyncImage -> graphicsLayer (visual scale/translation)
+ * combinedClickable is used instead of pointerInput { detectTapGestures } because
+ * detectTapGestures consumes every MOVE event (via waitForUpOrCancellation) until
+ * the touch slop is exceeded, which starves the HorizontalPager of the drag events
+ * it needs to recognise a swipe. combinedClickable is designed to cooperate with
+ * scrollable parents and does not consume move events.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ZoomablePage(
     uri: Uri,
@@ -136,42 +133,37 @@ private fun ZoomablePage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onDoubleTap = {
-                        if (scale > 1f) {
-                            scale = 1f
-                            offset = Offset.Zero
-                        } else {
-                            scale = 2.5f
-                        }
-                        onScaleChanged(scale)
-                    },
-                    onTap = { onTap() }
-                )
-            }
+            .combinedClickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = { onTap() },
+                onDoubleClick = {
+                    if (scale > 1f) {
+                        scale = 1f
+                        offset = Offset.Zero
+                    } else {
+                        scale = 2.5f
+                    }
+                    onScaleChanged(scale)
+                }
+            )
+            .transformable(
+                state = transformableState,
+                canPan = { scale > 1f }
+            )
     ) {
-        Box(
+        AsyncImage(
+            model = uri,
+            contentDescription = "Fullscreen image",
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxSize()
-                .transformable(
-                    state = transformableState,
-                    canPan = { scale > 1f }  // pass-through at normal zoom so pager can swipe
+                .graphicsLayer(
+                    scaleX = scale,
+                    scaleY = scale,
+                    translationX = offset.x,
+                    translationY = offset.y
                 )
-        ) {
-            AsyncImage(
-                model = uri,
-                contentDescription = "Fullscreen image",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale,
-                        translationX = offset.x,
-                        translationY = offset.y
-                    )
-            )
-        }
+        )
     }
 }
